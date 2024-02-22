@@ -1,13 +1,12 @@
 import { RoomType } from "../types/types";
-import { getUsers, getUserById } from "./users";
+import { getUserById } from "./users";
 
 const rooms: RoomType[] = []
 let roomNumber = 0
 
 function createRoom(id: number) {
   const userData = getUserById(id);
-  rooms.push({ id: roomNumber++, full: false, playerIDs: [id], name: userData!.name, index: userData!.index })
-  console.log(rooms);
+  rooms.push({ id: roomNumber++, full: false, playerIDs: [id], name: userData!.name, index: roomNumber - 1 })
 }
 
 function updateRoom() {
@@ -22,4 +21,20 @@ function getRooms() {
   return rooms;
 }
 
-export { createRoom, getRooms, updateRoom };
+function getRoomByIndex(index: number) {
+  for(let i = 0; i < rooms.length; i++) {
+    if (rooms[i].index === index) {
+      return rooms[i];
+    }
+  }
+}
+
+async function addUserToRoom(index: number, id: number) {
+  const room = getRoomByIndex(index);
+  const user = getUserById(id);
+  const roomInd = rooms.indexOf(room!)
+  rooms[roomInd].full = true;
+  rooms[roomInd].playerIDs.push(user!.id);
+}
+
+export { createRoom, getRooms, updateRoom, addUserToRoom, getRoomByIndex };

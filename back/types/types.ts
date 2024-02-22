@@ -1,3 +1,5 @@
+import WebSocket from "ws"
+
 export type ReceivedDataType = {
   type: string,
   data: string,
@@ -16,4 +18,9 @@ export type UsersType = {
   name: string,
   index: number,
   id: number
+}
+
+export type SocketsType = {
+  id: number,
+  socket: WebSocket
 }
