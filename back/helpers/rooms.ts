@@ -13,7 +13,13 @@ function updateRoom() {
   if(rooms.length === 0) {
     return { type: "update_room", data: "[]", id: 0 };
   } else {
-    return { type: "update_room", data: JSON.stringify(rooms.map((el) => { return { roomId: el.id, roomUsers: [ { name: el.name, index: el.index } ] } })), id: 0 }
+    const freeRooms: RoomType[] = [];
+    for (let i = 0; i < rooms.length; i++) {
+      if (!rooms[i].full) {
+        freeRooms.push(rooms[i]);
+      }
+    }
+    return { type: "update_room", data: JSON.stringify(freeRooms.map((el) => { return { roomId: el.id, roomUsers: [ { name: el.name, index: el.index } ] } })), id: 0 }
   }
 }
 
