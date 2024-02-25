@@ -39,8 +39,12 @@ async function addUserToRoom(index: number, id: number) {
   const room = getRoomByIndex(index);
   const user = getUserById(id);
   const roomInd = rooms.indexOf(room!)
-  rooms[roomInd].full = true;
-  rooms[roomInd].playerIDs.push(user!.id);
+  if (!rooms[roomInd].playerIDs.includes(id)) {
+    rooms[roomInd].full = true;
+    rooms[roomInd].playerIDs.push(user!.id);
+    return true;
+  }
+  return false;
 }
 
 export { createRoom, getRooms, updateRoom, addUserToRoom, getRoomByIndex };

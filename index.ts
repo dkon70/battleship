@@ -30,13 +30,14 @@ server.on('connection', function(socket, request) {
     if (receivedData.type === "add_user_to_room") {
       const response = await JSON.parse(data.toString());
       const roomData = await JSON.parse(response.data);
-      await addUserToRoom(roomData.indexRoom, socketID);
-      socket.send(JSON.stringify(updateRoom()));
-      const room = getRoomByIndex(roomData.indexRoom);
-      const player1Socket = getSocketByID(sockets, room!.playerIDs[0]);
-      const player2Socket = getSocketByID(sockets, room!.playerIDs[1]);
-      player1Socket!.send(JSON.stringify({ type: "create_game", data: JSON.stringify({ idGame: roomData.indexRoom, idPlayer: room!.playerIDs[0] }), id: 0 }))
-      player2Socket!.send(JSON.stringify({ type: "create_game", data: JSON.stringify({ idGame: roomData.indexRoom, idPlayer: room!.playerIDs[1] }), id: 0 }))
+      if (await addUserToRoom(roomData.indexRoom, socketID)) {
+        socket.send(JSON.stringify(updateRoom()));
+        const room = getRoomByIndex(roomData.indexRoom);
+        const player1Socket = getSocketByID(sockets, room!.playerIDs[0]);
+        const player2Socket = getSocketByID(sockets, room!.playerIDs[1]);
+        player1Socket!.send(JSON.stringify({ type: "create_game", data: JSON.stringify({ idGame: roomData.indexRoom, idPlayer: room!.playerIDs[0] }), id: 0 }))
+        player2Socket!.send(JSON.stringify({ type: "create_game", data: JSON.stringify({ idGame: roomData.indexRoom, idPlayer: room!.playerIDs[1] }), id: 0 }))
+      }
     }
     if (receivedData.type === "add_ships") {
       const data = await JSON.parse(receivedData.data);
