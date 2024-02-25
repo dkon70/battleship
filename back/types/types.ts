@@ -17,7 +17,8 @@ export type RoomType = {
 export type UsersType = {
   name: string,
   index: number,
-  id: number
+  id: number,
+  password: string
 }
 
 export type SocketsType = {
