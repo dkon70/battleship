@@ -24,3 +24,13 @@ export type SocketsType = {
   id: number,
   socket: WebSocket
 }
+
+export type PlayerData = {
+  id: number,
+  ships: [],
+}
+
+export type BoardsType = {
+  roomID: number,
+  players: PlayerData[],
+}

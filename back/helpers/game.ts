@@ -1,12 +1,4 @@
-type PlayerData = {
-  id: number,
-  ships: [],
-}
-
-type BoardsType = {
-  roomID: number,
-  players: PlayerData[],
-}
+import { BoardsType } from "../types/types";
 
 const boards: BoardsType[] = [];
 
