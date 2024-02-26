@@ -1,4 +1,4 @@
-import { BoardsType, FieldsType, ReceivedShipsData } from "../types/types";
+import { BoardsType, FieldsType, ReceivedShipsData, ShipsType } from "../types/types";
 
 const boards: BoardsType[] = [];
 const fields: FieldsType = {};
@@ -40,8 +40,26 @@ async function addShips(data: [], roomID: number, playerID: number) {
   generateFields(data, roomID, playerID);
 }
 
-function checkDestroy(roomID: number, playerID: number) {
+function checkDestroy(shipObj: ShipsType) {
+  let count = 0;
+  for(let i = 0; i < shipObj.coordinates.length; i++) {
+    if (shipObj.coordinates[i].hit === false) {
+      count++;
+    }
+  }
+  if (count > 0) {
+    return true;
+  }
+  return false;
+}
 
+function checkWin(shipsObj: ShipsType[]) {
+  for (let i = 0; i < shipsObj.length; i++) {
+    if (shipsObj[i].destroyed === false) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function handleAttack(coordinates: { x: number, y: number }, roomID: number, playerID: number) {
@@ -63,7 +81,17 @@ function handleAttack(coordinates: { x: number, y: number }, roomID: number, pla
     for (let j = 0; j < enemyField[i].coordinates.length; j++) {
       if (enemyField[i].coordinates[j].x === coordinates.x && enemyField[i].coordinates[j].y === coordinates.y) {
         enemyField[i].coordinates[j].hit = true;
-        return JSON.stringify({ type: "attack", data: JSON.stringify({ position: { x: coordinates.x, y: coordinates.y }, currentPlayer: playerID, status: "shot" }) });
+        const obj = enemyField[i];
+        if (checkDestroy(obj)) {
+          return JSON.stringify({ type: "attack", data: JSON.stringify({ position: { x: coordinates.x, y: coordinates.y }, currentPlayer: playerID, status: "shot" }) });
+        } else {
+          enemyField[i].destroyed = true;
+          if (checkWin(enemyField)) {
+            return JSON.stringify({ type: "finish", data: JSON.stringify({ winPlayer: playerID }) });
+          } else {
+            return JSON.stringify({ type: "attack", data: JSON.stringify({ position: { x: coordinates.x, y: coordinates.y }, currentPlayer: playerID, status: "killed" }) });
+          }
+        }
       }
     }
   }
