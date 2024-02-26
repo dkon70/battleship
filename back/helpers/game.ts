@@ -90,7 +90,7 @@ function handleAttack(coordinates: { x: number, y: number }, roomID: number, pla
           enemyField[i].destroyed = true;
           if (checkWin(enemyField)) {
             addWinner(getUserById(playerID)!.name);
-            return JSON.stringify({ type: "finish", data: JSON.stringify({ winPlayer: playerID }) });
+            return [JSON.stringify({ type: "attack", data: JSON.stringify({ position: { x: coordinates.x, y: coordinates.y }, currentPlayer: playerID, status: "shot" }) }), JSON.stringify({ type: "attack", data: JSON.stringify({ position: { x: coordinates.x, y: coordinates.y }, currentPlayer: playerID, status: "killed" }) }), JSON.stringify({ type: "finish", data: JSON.stringify({ winPlayer: playerID }) })];
           } else {
             return JSON.stringify({ type: "attack", data: JSON.stringify({ position: { x: coordinates.x, y: coordinates.y }, currentPlayer: playerID, status: "killed" }) });
           }

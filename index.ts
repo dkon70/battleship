@@ -67,23 +67,30 @@ server.on('connection', function(socket, request) {
       if (player1Socket && player2Socket) {
         [player1Socket, player2Socket].forEach(async (playerSocket) => {
           if (data.indexPlayer === turn[data.gameId]) {
-            const attackInfo = await JSON.parse(handleAttack(receivedData.type === "attack" ? { x: data.x, y: data.y } : randomAttackCoords, data.gameId, data.indexPlayer));
-            const attackStatus = await JSON.parse(attackInfo.data);
-            if (attackInfo.type === "finish") {
-              server.clients.forEach((client) => {
-                if (client.readyState === WebSocket.OPEN) {
-                  client.send(JSON.stringify({ type: "update_winners", data: JSON.stringify(getWinners()), id: 0 }));
-                }
-              })
-            }
-            if (attackStatus.status === "miss") {
-              playerSocket.send(JSON.stringify(attackInfo));
-              turn[data.gameId] = data.indexPlayer === playersInGame[data.gameId][0] ? playersInGame[data.gameId][1] : playersInGame[data.gameId][0];
-              playerSocket.send(JSON.stringify({ type: "turn", data: JSON.stringify({ currentPlayer: turn[data.gameId] }), id: 0 }));
+            const received = handleAttack(receivedData.type === "attack" ? { x: data.x, y: data.y } : randomAttackCoords, data.gameId, data.indexPlayer);
+            if (typeof received === 'string') {
+              const attackInfo = await JSON.parse(received);
+              const attackStatus = await JSON.parse(attackInfo.data);
+              if (attackStatus.status === "miss") {
+                playerSocket.send(JSON.stringify(attackInfo));
+                turn[data.gameId] = data.indexPlayer === playersInGame[data.gameId][0] ? playersInGame[data.gameId][1] : playersInGame[data.gameId][0];
+                playerSocket.send(JSON.stringify({ type: "turn", data: JSON.stringify({ currentPlayer: turn[data.gameId] }), id: 0 }));
+              } else {
+                playerSocket.send(JSON.stringify(attackInfo));
+                turn[data.gameId] = data.indexPlayer === playersInGame[data.gameId][0] ? playersInGame[data.gameId][0] : playersInGame[data.gameId][1];
+                playerSocket.send(JSON.stringify({ type: "turn", data: JSON.stringify({ currentPlayer: turn[data.gameId] }), id: 0 }));
+              }
             } else {
-              playerSocket.send(JSON.stringify(attackInfo));
-              turn[data.gameId] = data.indexPlayer === playersInGame[data.gameId][0] ? playersInGame[data.gameId][0] : playersInGame[data.gameId][1];
-              playerSocket.send(JSON.stringify({ type: "turn", data: JSON.stringify({ currentPlayer: turn[data.gameId] }), id: 0 }));
+              if (received.length === 3) {
+                received.forEach((res) => {
+                  playerSocket.send(res);
+                });
+                server.clients.forEach((client) => {
+                  if (client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify({ type: "update_winners", data: JSON.stringify(getWinners()), id: 0 }));
+                  }
+                });
+              }
             }
           }
         })
