@@ -1,4 +1,6 @@
 import { BoardsType, FieldsType, ReceivedShipsData, ShipsType } from "../types/types";
+import { addWinner } from "./leaderboard";
+import { getUserById } from "./users";
 
 const boards: BoardsType[] = [];
 const fields: FieldsType = {};
@@ -87,6 +89,7 @@ function handleAttack(coordinates: { x: number, y: number }, roomID: number, pla
         } else {
           enemyField[i].destroyed = true;
           if (checkWin(enemyField)) {
+            addWinner(getUserById(playerID)!.name);
             return JSON.stringify({ type: "finish", data: JSON.stringify({ winPlayer: playerID }) });
           } else {
             return JSON.stringify({ type: "attack", data: JSON.stringify({ position: { x: coordinates.x, y: coordinates.y }, currentPlayer: playerID, status: "killed" }) });

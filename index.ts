@@ -1,12 +1,12 @@
-import { WebSocketServer } from 'ws'
+import WebSocket, { WebSocketServer } from 'ws'
 import { regUser } from './back/helpers/users'
 import { createRoom, updateRoom, addUserToRoom, getRoomByIndex } from './back/helpers/rooms'
 import getSocketByID from './back/utils/getSocketByID';
 import { SocketsType } from './back/types/types';
 import { addShips, getBoardByRoomID, getShipsDataBySocketID, getPlayerIDsByGameId, handleAttack } from './back/helpers/game';
+import { getWinners } from './back/helpers/leaderboard';
 
 let id = 0;
-
 const server = new WebSocketServer({ port: 3000 })
 const sockets: SocketsType[] = [];
 const playersInGame: number[][] = [];
@@ -21,7 +21,7 @@ server.on('connection', function(socket, request) {
       const regResponse = await regUser(receivedData, socketID);
       socket.send(JSON.stringify(regResponse));
       socket.send(JSON.stringify(updateRoom()));
-      socket.send(JSON.stringify({ type: "update_winners", data: "[]", id: 0 }))
+      socket.send(JSON.stringify({ type: "update_winners", data: JSON.stringify(getWinners()), id: 0 }));
     }
     if (receivedData.type === "create_room") {
       createRoom(socketID);
@@ -61,10 +61,18 @@ server.on('connection', function(socket, request) {
       const data = await JSON.parse(receivedData.data);
       const player1Socket = getSocketByID(sockets, socketID);
       const player2Socket = getSocketByID(sockets, playersInGame[data.gameId][0] === socketID ? playersInGame[data.gameId][1] : playersInGame[data.gameId][0]);
+      
       if (player1Socket && player2Socket) {
         [player1Socket, player2Socket].forEach(async (playerSocket) => {
           const attackInfo = await JSON.parse(handleAttack(receivedData.type === "attack" ? { x: data.x, y: data.y } : randomAttackCoords, data.gameId, data.indexPlayer));
           const attackStatus = await JSON.parse(attackInfo.data);
+          if (attackInfo.type === "finish") {
+            server.clients.forEach((client) => {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({ type: "update_winners", data: JSON.stringify(getWinners()), id: 0 }));
+              }
+            })
+          }
           if (attackStatus.status === "miss") {
             playerSocket.send(JSON.stringify(attackInfo));
             playerSocket.send(JSON.stringify({ type: "turn", data: JSON.stringify({ currentPlayer: data.indexPlayer === playersInGame[data.gameId][0] ? playersInGame[data.gameId][1] : playersInGame[data.gameId][0] }), id: 0 }));

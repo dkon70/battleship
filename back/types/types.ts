@@ -64,3 +64,8 @@ export type ReceivedShipsData = {
   type: string,
   length: number
 }
+
+export type LeaderBoardType = {
+  name: string,
+  wins: number
+}
