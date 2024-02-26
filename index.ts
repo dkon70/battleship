@@ -50,13 +50,20 @@ server.on('connection', function(socket, request) {
       socket.send(JSON.stringify({ type: "start_game", data: JSON.stringify({ ships: playerData, currentPlayerIndex: socketID }), id: 0 }));
       socket.send(JSON.stringify({ type: "turn", data: JSON.stringify({ currentPlayer: playersInGame[data.gameId][0] }), id: 0 }));
     }
-    if (receivedData.type === "attack") {
+    if (receivedData.type === "attack" || receivedData.type === "randomAttack") {
+      const randomAttackCoords = { x: 0, y: 0 }
+      if (receivedData.type === "randomAttack") {
+        const x = Math.floor(Math.random() * 9);
+        const y = Math.floor(Math.random() * 9);
+        randomAttackCoords.x = x;
+        randomAttackCoords.y = y;
+      }
       const data = await JSON.parse(receivedData.data);
       const player1Socket = getSocketByID(sockets, socketID);
       const player2Socket = getSocketByID(sockets, playersInGame[data.gameId][0] === socketID ? playersInGame[data.gameId][1] : playersInGame[data.gameId][0]);
       if (player1Socket && player2Socket) {
         [player1Socket, player2Socket].forEach(async (playerSocket) => {
-          const attackInfo = await JSON.parse(handleAttack({ x: data.x, y: data.y }, data.gameId, data.indexPlayer));
+          const attackInfo = await JSON.parse(handleAttack(receivedData.type === "attack" ? { x: data.x, y: data.y } : randomAttackCoords, data.gameId, data.indexPlayer));
           const attackStatus = await JSON.parse(attackInfo.data);
           if (attackStatus.status === "miss") {
             playerSocket.send(JSON.stringify(attackInfo));
