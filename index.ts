@@ -81,9 +81,11 @@ server.on('connection', function(socket, request) {
                 playerSocket.send(JSON.stringify({ type: "turn", data: JSON.stringify({ currentPlayer: turn[data.gameId] }), id: 0 }));
               }
             } else {
-              if (received.length === 3) {
-                received.forEach((res) => {
-                  playerSocket.send(res);
+              if (received[0] === "finish") {
+                received.forEach((res, index) => {
+                  if (index !== 0) {
+                    playerSocket.send(res);
+                  }
                 });
                 server.clients.forEach((client) => {
                   if (client.readyState === WebSocket.OPEN) {
