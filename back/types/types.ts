@@ -69,3 +69,7 @@ export type LeaderBoardType = {
   name: string,
   wins: number
 }
+
+export type TurnType = {
+  [roomID: number]: number;
+}
