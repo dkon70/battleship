@@ -1,6 +1,32 @@
-import { BoardsType } from "../types/types";
+import { BoardsType, FieldsType, ReceivedShipsData } from "../types/types";
 
 const boards: BoardsType[] = [];
+const fields: FieldsType = {};
+
+function getListOfCoordinates(startPoint: { x: number, y: number }, length: number, direction: boolean) {
+  const res = [];
+  for (let i = 0; i < length; i++) {
+    if (!direction) {
+      res.push({ x: startPoint.x + i, y: startPoint.y, hit: false });
+    } else {
+      res.push({ x: startPoint.x, y: startPoint.y + i, hit: false });
+    }
+  }
+  return res;
+}
+
+function generateFields(data: ReceivedShipsData[], roomID: number, playerID: number) {
+  const shipsData = [];
+  for (let i = 0; i < data.length; i++) {
+    shipsData.push({ length: data[i].length, direction: data[i].direction, coordinates: getListOfCoordinates(data[i].position, data[i].length, data[i].direction), destroyed: false })
+  }
+  if (!fields[roomID]) {
+    fields[roomID] = [];
+    fields[roomID].push({ [playerID]: shipsData });
+  } else {
+    fields[roomID].push({ [playerID]: shipsData });
+  }
+}
 
 async function addShips(data: [], roomID: number, playerID: number) {
   if (!getBoardByRoomID(roomID)) {
@@ -11,6 +37,37 @@ async function addShips(data: [], roomID: number, playerID: number) {
     const board = getBoardByRoomID(roomID);
     board!.players.push({ id: playerID, ships: [...data] });
   }
+  generateFields(data, roomID, playerID);
+}
+
+function checkDestroy(roomID: number, playerID: number) {
+
+}
+
+function handleAttack(coordinates: { x: number, y: number }, roomID: number, playerID: number) {
+  let enemyId = -1;
+  for (let i = 0; i < fields[roomID].length; i++) {
+    if (Number(Object.keys(fields[roomID][i])) !== playerID) {
+      enemyId = Number(Object.keys(fields[roomID][i]))
+    }
+  }
+
+  let enemyField;
+  if (Number(Object.keys(fields[roomID][0])) === enemyId) {
+    enemyField = fields[roomID][0][enemyId];
+  } else {
+    enemyField = fields[roomID][1][enemyId];
+  }
+
+  for (let i = 0; i < enemyField.length; i++) {
+    for (let j = 0; j < enemyField[i].coordinates.length; j++) {
+      if (enemyField[i].coordinates[j].x === coordinates.x && enemyField[i].coordinates[j].y === coordinates.y) {
+        enemyField[i].coordinates[j].hit = true;
+        return JSON.stringify({ type: "attack", data: JSON.stringify({ position: { x: coordinates.x, y: coordinates.y }, currentPlayer: playerID, status: "shot" }) });
+      }
+    }
+  }
+  return JSON.stringify({ type: "attack", data: JSON.stringify({ position: { x: coordinates.x, y: coordinates.y }, currentPlayer: playerID, status: "miss" }) });
 }
 
 function getBoardByRoomID(roomID: number) {
@@ -43,4 +100,4 @@ function getPlayerIDsByGameId(gameId: number) {
   return;
 }
 
-export { addShips, getBoardByRoomID, getShipsDataBySocketID, getPlayerIDsByGameId };
+export { addShips, getBoardByRoomID, getShipsDataBySocketID, getPlayerIDsByGameId, handleAttack };

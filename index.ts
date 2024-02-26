@@ -3,7 +3,7 @@ import { regUser } from './back/helpers/users'
 import { createRoom, updateRoom, addUserToRoom, getRoomByIndex } from './back/helpers/rooms'
 import getSocketByID from './back/utils/getSocketByID';
 import { SocketsType } from './back/types/types';
-import { addShips, getBoardByRoomID, getShipsDataBySocketID, getPlayerIDsByGameId } from './back/helpers/game';
+import { addShips, getBoardByRoomID, getShipsDataBySocketID, getPlayerIDsByGameId, handleAttack } from './back/helpers/game';
 
 let id = 0;
 
@@ -55,8 +55,16 @@ server.on('connection', function(socket, request) {
       const player1Socket = getSocketByID(sockets, socketID);
       const player2Socket = getSocketByID(sockets, playersInGame[data.gameId][0] === socketID ? playersInGame[data.gameId][1] : playersInGame[data.gameId][0]);
       if (player1Socket && player2Socket) {
-        [player1Socket, player2Socket].forEach((playerSocket) => {
-          playerSocket.send(JSON.stringify({ type: "turn", data: JSON.stringify({ currentPlayer: data.indexPlayer === playersInGame[data.gameId][0] ? playersInGame[data.gameId][1] : playersInGame[data.gameId][0] }), id: 0 }));
+        [player1Socket, player2Socket].forEach(async (playerSocket) => {
+          const attackInfo = await JSON.parse(handleAttack({ x: data.x, y: data.y }, data.gameId, data.indexPlayer));
+          const attackStatus = await JSON.parse(attackInfo.data);
+          if (attackStatus.status === "miss") {
+            playerSocket.send(JSON.stringify(attackInfo));
+            playerSocket.send(JSON.stringify({ type: "turn", data: JSON.stringify({ currentPlayer: data.indexPlayer === playersInGame[data.gameId][0] ? playersInGame[data.gameId][1] : playersInGame[data.gameId][0] }), id: 0 }));
+          } else {
+            playerSocket.send(JSON.stringify(attackInfo));
+            playerSocket.send(JSON.stringify({ type: "turn", data: JSON.stringify({ currentPlayer: data.indexPlayer === playersInGame[data.gameId][0] ? playersInGame[data.gameId][0] : playersInGame[data.gameId][1] }), id: 0 }));
+          }
         })
       }
     }
